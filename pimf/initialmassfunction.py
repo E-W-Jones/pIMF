@@ -4,7 +4,7 @@ Some python classes to analytically do Initial Mass Function integrals, and easi
 import numpy as np
 from scipy import special
 
-from ._interpolator import integrate_weighted
+from .utils.interpolator import integrate_weighted
 
 
 class InitialMassFunction:
