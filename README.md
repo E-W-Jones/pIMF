@@ -16,7 +16,7 @@ There are several ways one can define an IMF. I have tried to be consistent as d
 
 This means that the `integrate` method calculates the total **number** of stars that form in a given mass range, and `integrate_product` calculates the total **mass**.
 
-Note the definition also uses $\mathrm{d}M$, not $\mathrm{d}\log(M)$.
+Note the definition also uses $\mathrm{d}M$, not $\mathrm{d}\log M$.
 
 These differences effectively just introduce/remove factors of $M$ so it's not hard to switch between them, but it is important to make sure you get it right.
 
@@ -32,7 +32,7 @@ We currently have implemented several functional forms:
 Check out [Contributing](#contributing) if you want anything not listed above!
 
 ## Installation
-I will hopefully publish to [pypi](https://pypi.org) and [conda](https://docs.conda.io/en/latest/) at some point, but since this is such a simple library it's not high on my list of things to do.
+I will hopefully publish to [pypi](https://pypi.org) and [conda](https://docs.conda.io/en/latest/) once I have a setup.py file in version 1.0.
 
 ### Dependancies
 Install the following dependancies using your favourite method
