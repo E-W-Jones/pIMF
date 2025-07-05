@@ -44,7 +44,7 @@ Run `pip install .`
 * scipy
 
 ## Tutorial
-It is hopefully pretty easy to get started with pIMF. The below code shows you how to plot a few different literature IMFs to compare them.
+It is hopefully pretty easy to get started with pIMF. The below code shows you how to plot a few different literature IMFs to compare them. See also our [Read the Docs](https://pimf.readthedocs.io/en/latest/)
 
 ```python
 from pimf import PowerLawIMF, ChabrierIMF, BrokenPowerLawIMF

@@ -33,6 +33,7 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/E-W-Jones/pIMF"
 Issues = "https://github.com/E-W-Jones/pIMF/issues"
+Documentation = "https://pimf.readthedocs.io/en/latest/"
 
 [tool.setuptools.dynamic]
 version = {attr = "pimf.__version__"}
