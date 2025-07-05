@@ -39,9 +39,16 @@ Download the source code, e.g. by cloning this repo.
 
 Run `pip install .`
 
+For everything needed to run tests, build documentation, etc. install the development version (note the quotes):
+
+`pip install '.[dev]'`
+
 ### Requirements
 * numpy
 * scipy
+* Sphinx [dev only]
+* myst-parser [dev only]
+* linkify-it-py [dev only]
 
 ## Tutorial
 It is hopefully pretty easy to get started with pIMF. The below code shows you how to plot a few different literature IMFs to compare them. See also our [Read the Docs](https://pimf.readthedocs.io/en/latest/)

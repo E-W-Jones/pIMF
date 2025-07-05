@@ -37,3 +37,10 @@ Documentation = "https://pimf.readthedocs.io/en/latest/"
 
 [tool.setuptools.dynamic]
 version = {attr = "pimf.__version__"}
+
+[project.optional-dependencies]
+dev = [
+  'Sphinx',
+  'myst-parser',
+  'linkify-it-py'
+]
