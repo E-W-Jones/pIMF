@@ -34,25 +34,14 @@ Check out [Contributing](#contributing) if you want anything not listed above!
 ## Installation
 I will hopefully publish to [pypi](https://pypi.org) and [conda](https://docs.conda.io/en/latest/) once I have a setup.py file in version 1.0.
 
-### Dependancies
-Install the following dependancies using your favourite method
+### From source
+Download the source code, e.g. by cloning this repo.
+
+Run `pip install .`
+
+### Requirements
 * numpy
 * scipy
-
-### Download Source Code
-Clone this repo from github or download as a zip. 
-
-### Add to PYTHONPATH
-Once you have a copy of the code on your computer, if you want to be able to use `import pimf` from anywhere then you'll need to tell your system where to find it.
-
-If you're using [conda](https://docs.conda.io/en/latest/) then if you download to your relevant `site-packages` folder it will take care of this step. You can find the folder with something like `python -c "import scipy; print(scipy.__file__)"`. Mine looks like `.../miniconda3/envs/pimf/lib/python3.13/site-packages`. This might be possible with other virtual environments but I don't know.
-
-Otherwise, you can manually add the package directory to your `PYTHONPATH` (where python looks to find packages) by prepending it as so:
-```bash
-export PYTHONPATH="path/to/pIMF":PYTHONPATH
-```
-
-To avoid doing this every time you can add it to your `.bashrc` (or similar).
 
 ## Tutorial
 It is hopefully pretty easy to get started with pIMF. The below code shows you how to plot a few different literature IMFs to compare them.
