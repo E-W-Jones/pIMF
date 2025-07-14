@@ -6,6 +6,15 @@ from scipy import special
 
 from .utils.interpolator import integrate_weighted
 
+__all__ = [
+    "InitialMassFunction",
+    "PowerLawIMF",
+    "ChabrierIMF",
+    "BrokenPowerLawIMF",
+    "L3IMF",
+    "LognormalIMF",
+    "ExponentialCutoffPowerLawIMF"
+]
 
 class InitialMassFunction:
     def __call__(self):
@@ -110,7 +119,9 @@ class PowerLawIMF(InitialMassFunction):
         Gives the analytical solution to the integral:
             $\\int^{M_{max}}_{M_{min}} \\xi(m)dm = \\xi_0 \\frac{M_{max}^{\\alpha+1} - M_{min}^{\\alpha+1}}{\\alpha + 1}$.
 
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         return self.ξ0 * (Mmax**(self.α+1) - Mmin**(self.α+1)) / (self.α+1)
 
@@ -119,7 +130,9 @@ class PowerLawIMF(InitialMassFunction):
         Gives the analytical solution to the integral:
             $\\int^{M_{max}}_{M_{min}} m\\xi(m)dm = \\xi_0 \\frac{M_{max}^{\\alpha+2} - M_{min}^{\\alpha+2}}{\\alpha + 2}$.
 
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         return self.ξ0 * (Mmax**(self.α+2) - Mmin**(self.α+2)) / (self.α+2)
 
@@ -199,14 +212,15 @@ class ChabrierIMF(InitialMassFunction):
 
     def integrate(self, Mmin, Mmax):
         """
-        Gives the analytical[1] solution to the integral:
+        Gives the analytical solution to the integral:
             $\\int^{M_{max}}_{M_{min}} \\xi(m)dm = FILL IN$.
 
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
-
-        Notes
-        -----
-        [1] There is no true analytical solution to the integral of the log-normal function, instead being represented in terms of the error function.
+        ```{note}
+        The above equation doesn't take into account that Mmin and Mmax could both be above/below the transition mass, but the function call does.
+        ```
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         # NOTE: This mu is different to the mu in self.integrate_product
         μ1 = np.log10(min(1, Mmin) / self.mc) / (np.sqrt(2)*self.σ)
@@ -216,14 +230,15 @@ class ChabrierIMF(InitialMassFunction):
 
     def integrate_product(self, Mmin, Mmax):
         """
-        Gives the analytical[1] solution to the integral:
+        Gives the analytical solution to the integral:
             $\\int^{M_{max}}_{M_{min}} m\\xi(m)dm = FILL IN$.
 
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
-
-        Notes
-        -----
-        [1] There is no true analytical solution to the integral of the log-normal function, instead being represented in terms of the error function.
+        ```{note}
+        The above equation doesn't take into account that Mmin and Mmax could both be above/below the transition mass, but the function call does.
+        ```
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         # This took a while and lots of wrong factors and stuff, so please refer to computer algebra immediately: https://www.integral-calculator.com/#expr=exp%28-%28log_10%28x%29%20-%20log_10%28c%29%29%5E2%2F%282sigma%5E2%29&simplify=1
         # NOTE: This mu is different to the mu in self.integrate
@@ -247,7 +262,7 @@ class BrokenPowerLawIMF(InitialMassFunction):
     \\xi(m)dm =
     \\xi_0\\begin{cases}
     m^{\\alpha_1}, & m \\leq M_\\textrm{transition} \\\\
-    \\xi_0\\xi_\\textrm{continuity}m^{\\alpha_2}, & M_\\textrm{transition} \\leq m
+    \\xi_\\textrm{continuity}m^{\\alpha_2}, & M_\\textrm{transition} \\leq m
     \\end{cases}
     $$
 
@@ -310,9 +325,12 @@ class BrokenPowerLawIMF(InitialMassFunction):
         \\xi_0 \\frac{M_{max}^{\\alpha_1+1} - M_{min}^{\\alpha_1+1}}{\\alpha + 1} +
         \\xi_0 \\xi_\\textrm{continuity} \\frac{M_{max}^{\\alpha_2+1} - M_{min}^{\\alpha_2+1}}{\\alpha + 1},
         $$
-
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
-        NOTE: The above equation doesn't take into account that Mmin and Mmax could both be above/below the transition mass, but the function call does.
+        ```{note}
+        The above equation doesn't take into account that Mmin and Mmax could both be above/below the transition mass, but the function call does.
+        ```
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         return self.ξ0 * (min(self.Mtransition, Mmax)**(self.α1+1) - min(self.Mtransition, Mmin)**(self.α1+1)) / (self.α1+1) \
              + self.ξ0 * self.ξcontinuity * (max(self.Mtransition, Mmax)**(self.α2+1) - max(self.Mtransition, Mmin)**(self.α2+1)) / (self.α2+1)
@@ -326,8 +344,12 @@ class BrokenPowerLawIMF(InitialMassFunction):
         \\xi_0 \\xi_\\textrm{continuity} \\frac{M_{max}^{\\alpha_2+2} - M_{min}^{\\alpha_2+2}}{\\alpha + 2},
         $$
 
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
-        NOTE: The above equation doesn't take into account that Mmin and Mmax could both be above/below the transition mass, but the function call does.
+        ```{note}
+        The above equation doesn't take into account that Mmin and Mmax could both be above/below the transition mass, but the function call does.
+        ```
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         return self.ξ0 * (min(self.Mtransition, Mmax)**(self.α1+2) - min(self.Mtransition, Mmin)**(self.α1+2)) / (self.α1+2) \
              + self.ξ0 * self.ξcontinuity * (max(self.Mtransition, Mmax)**(self.α2+2) - max(self.Mtransition, Mmin)**(self.α2+2)) / (self.α2+2)
@@ -407,7 +429,7 @@ class L3IMF(InitialMassFunction):
         return (1 + (M / self.μ)**(1-self.α))**(1 - self.β)
 
     def __call__(self, M):
-        """Calculate the value $\\xi(m) = \\xi_0 m^\\alpha$."""
+        """Calculate the value $\\xi(m)$."""
         return self.ξ0 * (M / self.μ)**-self.α * (1 + (M / self.μ)**(1-self.α))**(-self.β)
 
     def integrate(self, Mmin, Mmax):
@@ -415,7 +437,9 @@ class L3IMF(InitialMassFunction):
         Gives the analytical solution to the integral:
             $\\int^{M_{max}}_{M_{min}} \\xi(m)dm = .
 
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         return self.ξ0 * self.integral_constant * (self._G(Mmax) - self._G(Mmin))
 
@@ -426,7 +450,9 @@ class L3IMF(InitialMassFunction):
 
         From equation 25 of Maschberger (2013).
 
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         return self.ξ0 * self.integral_product_constant * (self._B(Mmax) - self._B(Mmin))
 
@@ -522,9 +548,9 @@ class LognormalIMF(InitialMassFunction):
         return self.ξ0 * self.lognormal_product_integral_constant * (special.erf(μ2) - special.erf(μ1))
 
 # Like that in Wise+ (2012)
-class ExponentialCutoffPowerLawIMF(InitialMassFunction):
+class GeneralisedGammaIMF(InitialMassFunction):
     """
-    Implement a power law IMF with an exponential cut off of the form $\\xi(m) = \\xi_0 m^\\alpha\\exp\\left[-\\left(\\frac{m}{m_c}\\right)^\\beta\\right]$.
+    Implement a Generalised Gamma Function IMF of the form $\\xi(m) = \\xi_0 m^\\alpha\\exp\\left[-\\left(\\frac{m}{m_c}\\right)^\\beta\\right]$.
 
     You can specify if you want to normalise by mass or number, and the range.
     If a number is passed to normalisation then it is used
@@ -532,11 +558,7 @@ class ExponentialCutoffPowerLawIMF(InitialMassFunction):
 
     Normalisation value provides the value we are normalising to, i.e. if you want the IMF to represent 100 solar masses.
 
-    With the default ***.
-
-    Notes
-    -----
-    Include derivations?
+    The default values of alpha, beta, mc come from [Wise+ (2012)](https://ui.adsabs.harvard.edu/abs/2012ApJ...745...50W/abstract).
     """
     def __init__(self, alpha=-2.3, beta=-1.6, mc=10, normalisation=None, normalisation_value=1, Mmin=0.1, Mmax=100):
         self.α = alpha
@@ -591,7 +613,9 @@ class ExponentialCutoffPowerLawIMF(InitialMassFunction):
 
         Where $\\Gamma(n+1, u) = \\int_0^u t^n e^{-t}dt$ is the lower incomplete gamma function, $n+1 = \\frac{\\alpha+1}{\\beta}$, and $u_X = \\left(\\frac{M_X}{M_c}\\right)^{\\beta}$.
 
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         u1 = (Mmin / self.mc) ** self.β
         u2 = (Mmax / self.mc) ** self.β
@@ -605,13 +629,18 @@ class ExponentialCutoffPowerLawIMF(InitialMassFunction):
 
         Where $\\Gamma(n+1, u) = \\int_0^u t^n e^{-t}dt$ is the lower incomplete gamma function, $n+1 = \\frac{\\alpha+2}{\\beta}$, and $u_X = \\left(\\frac{M_X}{M_c}\\right)^{\\beta}$.
 
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         u1 = (Mmin / self.mc) ** self.β
         u2 = (Mmax / self.mc) ** self.β
         n_plus_1 = (self.α + 2) / self.β
         return self.ξ0 * self.mc * self.integral_constant * (self.Γ_lower_incomplete(n_plus_1, u2) - self.Γ_lower_incomplete(n_plus_1, u1))
 
+class ExponentialCutoffPowerLawIMF(GeneralisedGammaIMF):
+    def __init__(self, *args, **kwargs):
+        raise DeprecationWarning("`ExponentialCutoffPowerLawIMF` has been renamed `GeneralisedGammaIMF`.")
 
 def popII_IMFs():
     import matplotlib.pyplot as plt
@@ -669,7 +698,7 @@ def popIII_IMFs():
         PowerLawIMF(normalisation="mass", Mmin=10, Mmax=500),
         # LognormalIMF(normalisation="mass", Mmin=1, Mmax=100, mc=10),
         LognormalIMF(normalisation="mass", Mmin=1, Mmax=500, mc=30),
-        ExponentialCutoffPowerLawIMF(normalisation="mass", Mmin=1, Mmax=100, mc=10)
+        GeneralisedGammaIMF(normalisation="mass", Mmin=1, Mmax=100, mc=10)
             ]:
         print(imf)
         print("Difference between true mass and integrated (closer to 0 better): ", imf.integrate_product(imf.Mmin, imf.Mmax) - 1)
@@ -698,7 +727,7 @@ def popIII_IMFs():
         PowerLawIMF(normalisation="mass", Mmin=10, Mmax=500),
         LognormalIMF(normalisation="mass", Mmin=1, Mmax=100, mc=10),
         LognormalIMF(normalisation="mass", Mmin=1, Mmax=500, mc=30),
-        ExponentialCutoffPowerLawIMF(normalisation="mass", Mmin=1, Mmax=100, mc=10)
+        GeneralisedGammaIMF(normalisation="mass", Mmin=1, Mmax=100, mc=10)
             ]
 
     for imf in plot_IMFs:
