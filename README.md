@@ -1,5 +1,5 @@
 # pIMF
-pIMF (python Initial Mass Function, pronounced pie-em-ef) is a small library designed for interacting with intial mass functions of stars.
+pIMF (python Initial Mass Function, pronounced pie-em-eff) is a small library designed for interacting with intial mass functions of stars.
 
 The current scope is generating and integrating over different IMFs.
 
@@ -44,11 +44,7 @@ For everything needed to run tests, build documentation, etc. install the develo
 `pip install '.[dev]'`
 
 ### Requirements
-* numpy
-* scipy
-* Sphinx [dev only]
-* myst-parser [dev only]
-* linkify-it-py [dev only]
+For normal use, only `numpy` and `scipy` are required. The `pyproject.toml` file includes a full list.
 
 ## Tutorial
 It is hopefully pretty easy to get started with pIMF. The below code shows you how to plot a few different literature IMFs to compare them. See also our [Read the Docs](https://pimf.readthedocs.io/en/latest/)
