@@ -44,16 +44,36 @@ class InitialMassFunction:
         self.normalised = "user"
 
     def normalise_by_number(self, Mmin, Mmax, value=1):
-        """Normalise the IMF by number, so $\\int^{M_{max}}_{M_{min}} \\xi(m)dm = x$, where x is a user provided value, default 1."""
+        """Normalise the IMF by number, so $\\int^{M_\\mathrm{max}}_{M_\\mathrm{min}} \\xi(m)\\mathrm{d}m = x$, where x is a user provided value, default 1."""
         self._check_Mmin_Mmax(Mmin, Mmax)
         self.ξ0 = value / self.integrate(Mmin, Mmax)
         self.normalised = ("number", Mmin, Mmax)
 
     def normalise_by_mass(self, Mmin, Mmax, value=1):
-        """Normalise the IMF by mass, so $\\int^{M_{max}}_{M_{min}} m\\xi(m)dm = x$, where x is a user provided value, default 1."""
+        """Normalise the IMF by mass, so $\\int^{M_\\mathrm{max}}_{M_\\mathrm{min}} m\\xi(m)\\mathrm{d}m = x$, where x is a user provided value, default 1."""
         self._check_Mmin_Mmax(Mmin, Mmax)
         self.ξ0 = value / self.integrate_product(Mmin, Mmax)
         self.normalised = ("mass", Mmin, Mmax)
+
+    def mean_mass(self, Mmin, Mmax):
+        """
+        Calculate mean mass of an IMF.
+
+        $$M_\\mathrm{mean} = \\frac{\\int^{M_\\mathrm{max}}_{M_\\mathrm{min}} m\\xi(m)\\mathrm{d}m}{\\int^{M_\\mathrm{max}}_{M_\\mathrm{min}} m\\xi(m)\\mathrm{d}m}$$
+
+        Parameters
+        ----------
+        Mmin : int or float
+            Minimum mass.
+        Mmax : int or float.
+            Maximum mass.
+
+        Returns
+        -------
+        float
+            The mean mass of a star for the IMF.
+        """
+        return self.integrate_product(Mmin, Mmax) / self.integrate(Mmin, Mmax)
 
     def integrate_linear_piecewise_interpolated_product(self, a, b, x, y):
         """
@@ -63,6 +83,10 @@ class InitialMassFunction:
         """
         return integrate_weighted(a, b, x, y, weight_integral=self.integrate, weight_integral_product=self.integrate_product)
 
+    def _plot_helper(self, N=None):
+        """SHOULD NOT BE CONSIDERED PART OF PUBLIC API"""
+        M = np.geomspace(self.Mmin, self.Mmax, N=N)
+        return M, self.__call__(M)
 ###############################
 # Standard Population II IMFs #
 ###############################
