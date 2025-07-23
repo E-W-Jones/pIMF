@@ -13,7 +13,8 @@ __all__ = [
     "BrokenPowerLawIMF",
     "L3IMF",
     "LognormalIMF",
-    "ExponentialCutoffPowerLawIMF"
+    "GeneralisedGammaIMF",
+    "ExponentialCutoffPowerLawIMF"  # Deprecated as renamed to above
 ]
 
 class InitialMassFunction:

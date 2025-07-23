@@ -24,7 +24,7 @@ All of the IMFs in {py:class}`pimf.initialmassfunction` are also exposed here:
    ~pimf.BrokenPowerLawIMF
    ~pimf.L3IMF
    ~pimf.LognormalIMF
-   ~pimf.ExponentialCutoffPowerLawIMF
+   ~pimf.GeneralisedGammaIMF
 ```
 """
 
@@ -36,9 +36,10 @@ from .initialmassfunction import (
     BrokenPowerLawIMF,
     L3IMF,
     LognormalIMF,
-    ExponentialCutoffPowerLawIMF
+    GeneralisedGammaIMF,
+    ExponentialCutoffPowerLawIMF  # Deprecated
     )
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = initialmassfunction.__all__
