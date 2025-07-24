@@ -16,9 +16,7 @@ build:
   jobs:
     post_install:
       - echo "!!!!!!!"
-      - pwd
-      - ls
-      # - pip install -e .
+      - python -m pip install -e . --user
       - echo "!!!!!!!"
 
 # Build documentation in the "docs/" directory with Sphinx
