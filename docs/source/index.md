@@ -22,7 +22,7 @@ There are several IMFs available right out of the box:
    ~pimf.LognormalIMF
    ~pimf.ExponentialCutoffPowerLawIMF
 ```
-
+Or, you can [Subclass your own](./subclassing.ipynb)!
 <!-- 
 .. pIMF documentation master file, created by
    sphinx-quickstart on Sat Jul  5 15:16:33 2025.
