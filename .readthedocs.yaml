@@ -17,6 +17,7 @@ build:
     post_install:
       - echo "!!!!!!!"
       - pwd
+      - ls
       # - pip install -e .
       - echo "!!!!!!!"
 
