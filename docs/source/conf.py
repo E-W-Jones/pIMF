@@ -10,17 +10,8 @@ project = 'pIMF'
 copyright = '2025, Evan Jones'
 author = 'Evan Jones'
 
-# Unfortunately requires pimf to be installed. Issue for readthedocs and if you want the dev version to have docs
-# from pimf import __version__
-# release = __version__
-
-def get_version(fname):
-    with open(fname) as filein:
-        for line in filein.readlines():
-            if line.startswith("__version__"):
-                return line.split()[-1].strip("\"\n")
-
-release = get_version("../../pimf/__init__.py")
+from pimf import __version__
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

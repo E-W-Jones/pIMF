@@ -6,3 +6,4 @@ sphinx-copybutton
 sphinx-book-theme
 sphinx-togglebutton
 myst-nb
+matplotlib

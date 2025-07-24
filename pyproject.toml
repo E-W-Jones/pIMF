@@ -47,5 +47,6 @@ dev = [
   "sphinx-copybutton",
   "sphinx-book-theme",
   "sphinx-togglebutton",
-  "myst-nb"
+  "myst-nb",
+  "matplotlib
 ]
