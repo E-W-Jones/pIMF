@@ -36,10 +36,9 @@ from .initialmassfunction import (
     BrokenPowerLawIMF,
     L3IMF,
     LognormalIMF,
-    GeneralisedGammaIMF,
-    ExponentialCutoffPowerLawIMF  # Deprecated
+    GeneralisedGammaIMF
     )
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 __all__ = initialmassfunction.__all__

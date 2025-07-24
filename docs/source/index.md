@@ -20,7 +20,7 @@ There are several IMFs available right out of the box:
    ~pimf.BrokenPowerLawIMF
    ~pimf.L3IMF
    ~pimf.LognormalIMF
-   ~pimf.ExponentialCutoffPowerLawIMF
+   ~pimf.GeneralisedGammaIMF
 ```
 Or, you can [Subclass your own](./subclassing.ipynb)!
 <!-- 
