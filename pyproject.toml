@@ -40,7 +40,12 @@ version = {attr = "pimf.__version__"}
 
 [project.optional-dependencies]
 dev = [
-  'Sphinx',
-  'myst-parser',
-  'linkify-it-py'
+  "Sphinx",
+  "myst-parser",
+  "linkify-it-py",
+  "sphinx-autodoc2",
+  "sphinx-copybutton",
+  "sphinx-book-theme",
+  "sphinx-togglebutton",
+  "myst-nb"
 ]
