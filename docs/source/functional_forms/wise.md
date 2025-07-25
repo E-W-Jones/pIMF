@@ -4,13 +4,13 @@ This IMF used to be called `ExponentialCutoffPowerLawIMF`. It's possible some ol
 ```
 ## Form
 Also referred to as the _generalized
-Rosin-Rammler function_ by [Chabrier (2003)](https://ui.adsabs.harvard.edu/abs/2003PASP..115..763C/abstract), the [Generalised Gamma Distribution](https://en.wikipedia.org/wiki/Generalized_gamma_distribution) can be expressed as $$\xi(m) = \xi_0 M^\alpha\exp\left[-\left(\frac{M}{M_c}\right)^\beta\right].$$ This looks like a power law with an exponential cutoff at the low-mass end, which makes it tempting for studies of [Population III stars](../theory.md#population-ii-vs-population-iii).
+Rosin-Rammler function_ by [Chabrier (2003)](https://ui.adsabs.harvard.edu/abs/2003PASP..115..763C/abstract), the [Generalised Gamma Distribution](https://en.wikipedia.org/wiki/Generalized_gamma_distribution) can be expressed as $$\xi(m) = \xi_0 M^\alpha\exp\left[-\left(\frac{M}{M_c}\right)^\beta\right].$$ This looks like a power law with an exponential cutoff at the low-mass end, which makes it tempting for studies of [Population III stars](../theory.md#population-ii-vs-population-iii), but is also used for population II.
 
 The default values in our implementation are $$\alpha = -2.3, \beta=-1.6, M_c = 10M_\odot.$$
 
 [Wise+ (2012)](https://ui.adsabs.harvard.edu/abs/2012ApJ...745...50W/abstract) provide the values $$\alpha = -2.3, \beta=-1.6,$$ but suggested a characteristic mass $M_c\sim100M_\odot$. However, recent studies take values closer to $10M_\odot$ (e.g. [Brauer+ (2025)](https://ui.adsabs.harvard.edu/abs/2025ApJ...980...41B/abstract)). 
 
-[de Bennassuti+ (2017)](https://ui.adsabs.harvard.edu/abs/2017MNRAS.465..926D/abstract) also refer to a form with $\beta = -1$ and $M_c=20M_\odot$ as a "Larson-style" IMF.
+[de Bennassuti+ (2017)](https://ui.adsabs.harvard.edu/abs/2017MNRAS.465..926D/abstract), also refer to a form with $\beta = -1$ and $M_c=20M_\odot$ as a "Larson-style" IMF, after [Larson (1998)](https://ui.adsabs.harvard.edu/abs/1998MNRAS.301..569L/abstract).
 
 ## Implemented in
 This is implemented in the {py:class}`~pimf.initialmassfunction.GeneralisedGammaIMF` class, where the user is free to pick whatever parameters they like or use the default (same as above).
