@@ -618,14 +618,14 @@ class GeneralisedGammaIMF(InitialMassFunction):
 
     def __str__(self):
         if self.normalised == "user":
-            return f"Exponentially Truncated Power Law IMF with exponent {self.α}, characteristic mass {self.mc}, and damping exponent {self.β}, normalised by {self.normalised} with constant {self.ξ0}."
+            return f"Generalised Gamma Function IMF with exponent {self.α}, characteristic mass {self.mc}, and damping exponent {self.β}, normalised by {self.normalised} with constant {self.ξ0}."
         elif isinstance(self.normalised, tuple):
             if len(self.normalised) == 3 and self.normalised[0] in ("mass", "number"):
-                return f"Exponentially Truncated Power Law IMF with exponent {self.α}, characteristic mass {self.mc}, and damping exponent {self.β}, normalised by {self.normalised[0]} over the range {self.normalised[1:]} with constant {self.ξ0}."
+                return f"Generalised Gamma Function IMF with exponent {self.α}, characteristic mass {self.mc}, and damping exponent {self.β}, normalised by {self.normalised[0]} over the range {self.normalised[1:]} with constant {self.ξ0}."
             else:
                 raise RuntimeError(f"Unexpected self.normalised flag in {self}")
         else:
-            return f"Exponentially Truncated Power Law IMF with exponent {self.α}, characteristic mass {self.mc}, and damping exponent {self.β}. Not explicitly normalised."
+            return f"Generalised Gamma Function IMF with exponent {self.α}, characteristic mass {self.mc}, and damping exponent {self.β}. Not explicitly normalised."
 
     def __call__(self, M):
         """Calculate the value $\\xi(m) = \\xi_0 m^\\alpha\\exp\\left[-\\left(\\frac{m}{m_c}\\right)^\\beta\\right]$."""
