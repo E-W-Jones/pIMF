@@ -48,5 +48,6 @@ dev = [
   "sphinx-book-theme",
   "sphinx-togglebutton",
   "myst-nb",
-  "matplotlib"
+  "matplotlib",
+  "pytest"
 ]

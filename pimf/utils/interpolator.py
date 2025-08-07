@@ -1,3 +1,6 @@
+class ExtrapolationError(Exception):
+    pass
+
 # Create some methods for dealing with interpolated data/linear piecewise functions
 def interpolate(t, x, y, N=None, extrapolate=False):
     """For data defined (xi, yi), calculate y(t). Optionally provide the length, N, and extrapolation."""
@@ -17,7 +20,7 @@ def interpolate(t, x, y, N=None, extrapolate=False):
         elif t > x[-1]:
             return y[-2] + (t - x[-2]) * (y[-1] - y[-2]) / (x[-1] - x[-2])
     else:
-        raise ValueError(f"{t} lies outwith the bounds of ({x[0]}, {x[-1]})")
+        raise ExtrapolationError(f"{t} lies outwith the bounds of ({x[0]}, {x[-1]})")
 
 def find_bracketing_indices(t, x, N=None):
     """Find the indices i, j st xi <= t < xj. If t is outside of min(x), max(x), return edge index twice."""
@@ -32,8 +35,8 @@ def find_bracketing_indices(t, x, N=None):
     else:
         return i+1, i+1
 
-def integrate(a, b, x, y, N=None, debug=False):
-    """Integrate the linear piecewise function defined bt xi, yi from x=a to x=b."""
+def integrate(a, b, x, y, N=None, debug=False, extrapolate=False):
+    """Integrate the linear piecewise function defined at xi, yi from x=a to x=b."""
     #TODO: What's up with those boundary conditions huh?
     if N is None:
         N = len(x)
@@ -48,13 +51,25 @@ def integrate(a, b, x, y, N=None, debug=False):
     if b == x[N-1]:
         bi = N-2
 
+    if extrapolate:
+        if a < x[0]:
+            ai = 0
+        elif a > x[-1]:
+            ai = N-2
+        if b < x[0]:
+            bi = 0
+        elif b > x[-1]:
+            bi = N-2
+
     if debug:
         print(f"{ai = }, {bi = }")
+        integrate._ai = ai
+        integrate._bi = bi
 
     if ai is None:
-        raise ValueError("ai is None. Might currently be where I don't have boundary conditions.")
+        raise ExtrapolationError("ai is None. Might currently be where I don't have boundary conditions.")
     if bi is None:
-        raise ValueError("bi is None. Might currently be where I don't have boundary conditions.")
+        raise ExtrapolationError("bi is None. Might currently be where I don't have boundary conditions.")
 
     if ai == bi:
         i = ai
@@ -75,7 +90,7 @@ def integrate(a, b, x, y, N=None, debug=False):
         integral += 0.5 * (x[i+1] - x[i]) * (y[i+1] + y[i])
     return integral
 
-def integrate_weighted(a, b, x, y, weight_integral, weight_integral_product, N=None, debug=False):
+def integrate_weighted(a, b, x, y, weight_integral, weight_integral_product, N=None, debug=False, extrapolate=False):
     """
     Calculate the integral if a piecewise linear function defined by (x, y) from a to b, where the integrand is weighted by some function f
     int^b_a f(x) y(x) dx
@@ -96,15 +111,27 @@ def integrate_weighted(a, b, x, y, weight_integral, weight_integral_product, N=N
     if b == x[N-1]:
         bi = N-2
 
+    if extrapolate:
+        if a < x[0]:
+            ai = 0
+        elif a > x[-1]:
+            ai = N-2
+        if b < x[0]:
+            bi = 0
+        elif b > x[-1]:
+            bi = N-2
+
     if debug:
         print(f"{ai = }, {bi = }")
+        integrate_weighted._ai = ai
+        integrate_weighted._bi = bi
 
 
     if ai is None:
         print(a, b, x, y)
-        raise ValueError("ai is None. Might currently be where I don't have boundary conditions.")
+        raise ExtrapolationError("ai is None. Might currently be where I don't have boundary conditions.")
     if bi is None:
-        raise ValueError("bi is None. Might currently be where I don't have boundary conditions.")
+        raise ExtrapolationError("bi is None. Might currently be where I don't have boundary conditions.")
 
     if ai == bi:
         i = ai
@@ -127,23 +154,6 @@ def integrate_weighted(a, b, x, y, weight_integral, weight_integral_product, N=N
         integral += (y[i] - m*x[i]) * weight_integral(x[i], x[i+1]) + m * weight_integral_product(x[i], x[i+1])
     return integral
 
-def test_integrate(a=None, b=None, x=None, y=None, debug=True):
-    import numpy as np
-    from scipy.integrate import quad
-    import matplotlib.pyplot as plt
-
-    if x is None:
-        x = np.array([0, 1, 2, 3])
-    if y is None:
-        y = x**2
-    if a is None:
-        a = min(x)
-    if b is None:
-        b = max(x)
-
-
-    print(integrate(a, b, x, y, debug=debug))
-    print(quad(lambda x_: np.interp(x_, x, y), a, b))
 
 def test_integrate_product(a=None, b=None, x=None, y=None, weight=None, weight_integral=None, weight_integral_product=None, debug=True):
     import numpy as np
@@ -174,25 +184,6 @@ def test_integrate_product(a=None, b=None, x=None, y=None, weight=None, weight_i
 
 def main():
     import numpy as np
-    print("====== Testing interpolate ======")
-    x = np.array([0, 1, 2, 3, 4])
-    y = x**2
-    for t, yexpected in zip([-1, 0, 1.5, 4, 5],
-                            [-1, 0, 3*1.5 - 2, 16, 7*5 - 12]
-                            ):  # Expected for extrapolating linearly at edges
-        print(f"Me: {interpolate(t, x, y, extrapolate=True)} expected: {yexpected} diff: {interpolate(t, x, y, extrapolate=True) - yexpected}")
-
-    try:
-        interpolate(-1, x, y)
-    except ValueError as e:
-        print(f"Successfully raised error with message: {e.args}")
-
-    print("====== Testing integrate ======")
-    test_integrate(0, 0, x=np.array([0, 1, 2, 3]))  # ai = 0, bi = 0
-    test_integrate(1, 1.5, x=np.array([0, 1, 2, 3]), y=np.array([0, 1, 2, 3]))  # ai = 0, bi = 0
-    test_integrate(1, 1.5, x=np.array([0, 1, 2, 3]), y=np.array([0, 1, 2, 3])**2)  # ai = 0, bi = 0
-    test_integrate(3, 3, x=np.array([0, 1, 2, 3]))  # ai = 3, bi = 3
-    test_integrate(0.5, 2.5, x=np.array([0, 1, 2, 3]))  # ai = 0, bi = 2
 
     print("====== Testing integrate product ======")
     test_integrate_product(0, 0)
