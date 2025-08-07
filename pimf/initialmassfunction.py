@@ -75,13 +75,15 @@ class InitialMassFunction:
         """
         return self.integrate_product(Mmin, Mmax) / self.integrate(Mmin, Mmax)
 
-    def integrate_linear_piecewise_interpolated_product(self, a, b, x, y):
+    def integrate_linear_piecewise_interpolated_product(self, a, b, x, y, extrapolate_grid=False):
         """
         Integrate between a and b, assuming the IMF is multiplied by a linear piecewise function defined by the points (xi, yi).
 
         Assume f s.t. f(xi) = yi, where f is linear and piecewise. This function solves the integral $\\int^b_a f(m)\\xi(m)dm$.
+
+        Passing `extrapolate_grid=True` (`False` by default) will use the slope between (x0, y0), (x1, y1) for x < x0, and similarly for x > xN.
         """
-        return integrate_weighted(a, b, x, y, weight_integral=self.integrate, weight_integral_product=self.integrate_product)
+        return integrate_weighted(a, b, x, y, weight_integral=self.integrate, weight_integral_product=self.integrate_product, extrapolate=extrapolate_grid)
 
     def _plot_helper(self, N=None):
         """SHOULD NOT BE CONSIDERED PART OF PUBLIC API"""
