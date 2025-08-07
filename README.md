@@ -80,4 +80,4 @@ plt.show()
 If there are any features/[functional forms](#available-functional-forms) currently missing that you would like to see, feel free to [create an issue](https://github.com/E-W-Jones/pIMF/issues/new), or even [create your own pull request](https://github.com/E-W-Jones/pIMF/pulls)!
 
 ## Testing
-There is currently no testing infrastructure, however I do have some random functions/plots to check things look right. [This is a known issue](https://github.com/E-W-Jones/pIMF/issues/2).
+There is only a limited amount of testing, using pytest. [This is a known issue](https://github.com/E-W-Jones/pIMF/issues/1). To run the test suite, it's enough to run `pytest` in this directory.
