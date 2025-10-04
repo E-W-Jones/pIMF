@@ -39,7 +39,9 @@ Documentation = "https://pimf.readthedocs.io/en/latest/"
 version = {attr = "pimf.__version__"}
 
 [project.optional-dependencies]
+hdf5 = ["h5py"]
 dev = [
+  "h5py",
   "Sphinx",
   "myst-parser",
   "linkify-it-py",

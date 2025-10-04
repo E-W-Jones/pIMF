@@ -37,14 +37,14 @@ I will hopefully publish to [pypi](https://pypi.org) and [conda](https://docs.co
 ### From source
 Download the source code, e.g. by cloning this repo.
 
-Run `pip install .`
+Run `pip install .` or `pip install '.[hdf5]'` if you want to save/read stochastically generated samples (note the quotes).
 
 For everything needed to run tests, build documentation, etc. install the development version (note the quotes):
 
 `pip install '.[dev]'`
 
 ### Requirements
-For normal use, only `numpy` and `scipy` are required. The `pyproject.toml` file includes a full list.
+For normal use, only `numpy` and `scipy` are required. If you want to save/read generated stochastic samples then `h5py` is also required. The `pyproject.toml` file includes a full list for development and testing.
 
 ## Tutorial
 It is hopefully pretty easy to get started with pIMF. The below code shows you how to plot a few different literature IMFs to compare them. See also our [Read the Docs](https://pimf.readthedocs.io/en/latest/)
