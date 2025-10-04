@@ -495,7 +495,7 @@ class BrokenPowerLawIMF(InitialMassFunction):
             return out
         else:
             if x < xtransition:  # Below transition
-                return ((α1p1 * N / self.ξ0) * x + Mmin**α1p1) ** (1 / α1p1)
+                return ((α1p1 * N / self.ξ0) * x + self.Mmin**α1p1) ** (1 / α1p1)
             else:  # Above transition
                 return ((α2p1 * N / (self.ξ0*self.ξcontinuity)) * (x - xtransition) + self.Mtransition**α2p1) ** (1 / α2p1)
 
