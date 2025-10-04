@@ -7,6 +7,7 @@ self
 tutorial
 subclassing
 theory
+sampling
 apidocs/index
 ```
 
