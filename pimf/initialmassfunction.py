@@ -22,7 +22,7 @@ class InitialMassFunction:
         raise NotImplementedError
 
     def __str__(self):
-            return f"Generic IMF."  # Do I want to keep this like this?
+        return f"Generic IMF."  # Do I want to keep this like this?
 
     def integrate(self, Mmin, Mmax):
         raise NotImplementedError
@@ -85,9 +85,29 @@ class InitialMassFunction:
         """
         return integrate_weighted(a, b, x, y, weight_integral=self.integrate, weight_integral_product=self.integrate_product, extrapolate=extrapolate_grid)
 
-    def _plot_helper(self, N=None):
+    def inverse_cdf(self, x):
+        """
+        Calculate the inverse cumulative distribution function for this IMF.
+
+        MATHS
+
+        This is intended to be used for stochastically sampling stars from the IMF using `LINK`
+
+        Parameters
+        ----------
+        x : int, float, or numpy array
+            The value of the CDF at a given mass. Between 0 and 1.
+
+        Returns
+        -------
+        type of x
+            The mass(es) that give the x value(s) in the CDF.
+        """
+        raise NotImplementedError
+
+    def _plot_helper(self, **kwargs):
         """SHOULD NOT BE CONSIDERED PART OF PUBLIC API"""
-        M = np.geomspace(self.Mmin, self.Mmax, N=N)
+        M = np.geomspace(self.Mmin, self.Mmax, **kwargs)
         return M, self.__call__(M)
 ###############################
 # Standard Population II IMFs #
@@ -168,6 +188,28 @@ class PowerLawIMF(InitialMassFunction):
 
     def _integrate_log(self, Mmin, Mmax):
         return self.ξ0 * np.log(Mmax / Mmin)
+
+    def inverse_cdf(self, x):
+        """
+        Calculate the inverse cumulative distribution function for this IMF.
+
+        MATHS
+
+        This is intended to be used for stochastically sampling stars from the IMF using `LINK`
+
+        Parameters
+        ----------
+        x : int, float, or numpy array
+            The value of the CDF at a given mass. Between 0 and 1.
+
+        Returns
+        -------
+        type of x
+            The mass(es) that give the x value(s) in the CDF.
+        """
+        αp1 = self.α + 1
+        N = self.integrate(self.Mmin, self.Mmax)
+        return ((αp1 * N / self.ξ0) * x + self.Mmin**αp1) ** (1 / αp1)
 
 class ChabrierIMF(InitialMassFunction):
     """
@@ -282,6 +324,45 @@ class ChabrierIMF(InitialMassFunction):
         exponent = - (np.log10(transistion_mass / self.mc))**2 / (2*self.σ**2)
         return transistion_mass ** (-self.α - 1) * np.exp(exponent)
 
+    def inverse_cdf(self, x):
+        """
+        Calculate the inverse cumulative distribution function for this IMF.
+
+        MATHS
+
+        This is intended to be used for stochastically sampling stars from the IMF using `LINK`
+
+        Parameters
+        ----------
+        x : int, float, or numpy array
+            The value of the CDF at a given mass. Between 0 and 1.
+
+        Returns
+        -------
+        type of x
+            The mass(es) that give the x value(s) in the CDF.
+        """
+        #### This implementation is really messy but I was having so much trouble getting it to work. I don't think I did anything different, and it suddenly was fine...
+        αp1 = self.α + 1
+        Mtransition = 1  # In case we want to change our implementation from hardcoded Mtransition
+        N = self.integrate(self.Mmin, self.Mmax)
+        xtransition = self.integrate(self.Mmin, Mtransition) / N  # N to go from our IMF normalisation to a PDF
+        μ1 = np.log10(self.Mmin / self.mc) / (np.sqrt(2)*self.σ)
+        # We need to consider two cases:
+        # When we are above the transition
+        # When we are below the transition
+        if isinstance(x, (np.ndarray, tuple, list)):
+            x = np.asarray(x)
+            out = np.zeros_like(x, dtype=float)
+            out[x < xtransition] = self.mc * 10 ** ( (np.sqrt(2)*self.σ) * special.erfinv(N*x[x<xtransition]/(self.ξ0 * self.lognormal_integral_constant) + special.erf(μ1) )  )  # Below transition
+            out[x >= xtransition] = ((αp1 * N / (self.ξ0*self.ξcontinuity)) * (x[x >= xtransition] - xtransition) + Mtransition**αp1) ** (1 / αp1)  # Above transition
+            return out
+        else:
+            if x < xtransition:  # Below transition
+                return self.mc * 10 ** ( (np.sqrt(2)*self.σ) * special.erfinv(N*x/(self.ξ0 * self.lognormal_integral_constant) + special.erf(μ1) )  )
+            else:  # Above transition
+                return ((αp1 * N / (self.ξ0*self.ξcontinuity)) * (x - xtransition) + Mtransition**αp1) ** (1 / αp1)
+
 class BrokenPowerLawIMF(InitialMassFunction):
     """
     Implement a broken power law IMF of the form:
@@ -380,6 +461,43 @@ class BrokenPowerLawIMF(InitialMassFunction):
         """
         return self.ξ0 * (min(self.Mtransition, Mmax)**(self.α1+2) - min(self.Mtransition, Mmin)**(self.α1+2)) / (self.α1+2) \
              + self.ξ0 * self.ξcontinuity * (max(self.Mtransition, Mmax)**(self.α2+2) - max(self.Mtransition, Mmin)**(self.α2+2)) / (self.α2+2)
+
+    def inverse_cdf(self, x):
+        """
+        Calculate the inverse cumulative distribution function for this IMF.
+
+        MATHS
+
+        This is intended to be used for stochastically sampling stars from the IMF using `LINK`
+
+        Parameters
+        ----------
+        x : int, float, or numpy array
+            The value of the CDF at a given mass. Between 0 and 1.
+
+        Returns
+        -------
+        type of x
+            The mass(es) that give the x value(s) in the CDF.
+        """
+        α1p1 = self.α1 + 1
+        α2p1 = self.α2 + 1
+        N = self.integrate(self.Mmin, self.Mmax)
+        xtransition = self.integrate(self.Mmin, self.Mtransition) / N  # N to go from our IMF normalisation to a PDF
+        # We need to consider two cases:
+        # When we are above the transition
+        # When we are below the transition
+        if isinstance(x, (np.ndarray, tuple, list)):
+            x = np.asarray(x)
+            out = np.zeros_like(x, dtype=float)
+            out[x < xtransition] = ((α1p1 * N / self.ξ0) * x[x < xtransition] + self.Mmin**α1p1) ** (1 / α1p1)  # Below transition
+            out[x >= xtransition] = ((α2p1 * N / (self.ξ0*self.ξcontinuity)) * (x[x >= xtransition] - xtransition) + self.Mtransition**α2p1) ** (1 / α2p1)  # Above transition
+            return out
+        else:
+            if x < xtransition:  # Below transition
+                return ((α1p1 * N / self.ξ0) * x + Mmin**α1p1) ** (1 / α1p1)
+            else:  # Above transition
+                return ((α2p1 * N / (self.ξ0*self.ξcontinuity)) * (x - xtransition) + self.Mtransition**α2p1) ** (1 / α2p1)
 
 class L3IMF(InitialMassFunction):
     """
@@ -483,6 +601,35 @@ class L3IMF(InitialMassFunction):
         """
         return self.ξ0 * self.integral_product_constant * (self._B(Mmax) - self._B(Mmin))
 
+    def inverse_cdf(self, x):
+        """
+        Calculate the inverse cumulative distribution function for this IMF.
+
+        MATHS
+
+        This is intended to be used for stochastically sampling stars from the IMF using `LINK`
+
+        Parameters
+        ----------
+        x : int, float, or numpy array
+            The value of the CDF at a given mass. Between 0 and 1.
+        Mmin : int or float, optional
+            The minimum mass to integrate from, by default None, which means integrate from the minimum mass of normalisation.
+
+        Returns
+        -------
+        type of x
+            The mass(es) that give the x value(s) in the CDF.
+        """
+        N = self.integrate(self.Mmin, self.Mmax)
+        inv1mα = 1 / (1-self.α)
+        inv1mβ = 1 / (1-self.β)
+        return self.μ * ( ( x * N / self.ξ0 / self.integral_constant + self._G(self.Mmin) )**inv1mβ - 1 )**inv1mα
+        # See table 1 (4) in Maschberger (2013) - this is equivilant
+        brackets_term = x * (self._G(self.Mmax) - self._G(self.Mmin)) + self._G(Mmin)
+        parentheses_term = brackets_term ** inv1mβ - 1
+        return self.μ * parentheses_term ** inv1mα
+
 #####################################################################################################
 # Population III IMFs                                                                               #
 # Power law IMFs are also commonly used for population III stars, but with different slopes/limits. #
@@ -546,11 +693,9 @@ class LognormalIMF(InitialMassFunction):
         Gives the analytical[1] solution to the integral:
             $\\int^{M_{max}}_{M_{min}} \\xi(m)dm = FILL IN$.
 
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
-
-        Notes
-        -----
-        [1] There is no true analytical solution to the integral of the log-normal function, instead being represented in terms of the error function.
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         # NOTE: This mu is different to the mu in self.integrate_product
         μ1 = np.log10(Mmin / self.mc) / (np.sqrt(2)*self.σ)
@@ -562,17 +707,37 @@ class LognormalIMF(InitialMassFunction):
         Gives the analytical[1] solution to the integral:
             $\\int^{M_{max}}_{M_{min}} m\\xi(m)dm = FILL IN$.
 
-        NOTE: For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
-
-        Notes
-        -----
-        [1] There is no true analytical solution to the integral of the log-normal function, instead being represented in terms of the error function.
+        ```{warning}
+        For performance reasons we do not check Mmin < Mmax, or are within the bounds provided for normalisation.
+        ```
         """
         # This took a while and lots of wrong factors and stuff, so please refer to computer algebra immediately: https://www.integral-calculator.com/#expr=exp%28-%28log_10%28x%29%20-%20log_10%28c%29%29%5E2%2F%282sigma%5E2%29&simplify=1
         # NOTE: This mu is different to the mu in self.integrate
         μ1 = (np.log10(Mmin/self.mc) - self.σ**2*np.log(10)) / (np.sqrt(2)*self.σ)
         μ2 = (np.log10(Mmax/self.mc) - self.σ**2*np.log(10)) / (np.sqrt(2)*self.σ)
         return self.ξ0 * self.lognormal_product_integral_constant * (special.erf(μ2) - special.erf(μ1))
+
+    def inverse_cdf(self, x):
+        """
+        Calculate the inverse cumulative distribution function for this IMF.
+
+        MATHS
+
+        This is intended to be used for stochastically sampling stars from the IMF using `LINK`
+
+        Parameters
+        ----------
+        x : int, float, or numpy array
+            The value of the CDF at a given mass. Between 0 and 1.
+
+        Returns
+        -------
+        type of x
+            The mass(es) that give the x value(s) in the CDF.
+        """
+        N = self.integrate(self.Mmin, self.Mmax)
+        μ1 = np.log10(self.Mmin / self.mc) / (np.sqrt(2)*self.σ)
+        return self.mc * 10 ** ( (np.sqrt(2)*self.σ) * special.erfinv(N*x/(self.ξ0 * self.lognormal_integral_constant) + special.erf(μ1) ) )
 
 # Like that in Wise+ (2012)
 class GeneralisedGammaIMF(InitialMassFunction):
@@ -585,7 +750,7 @@ class GeneralisedGammaIMF(InitialMassFunction):
 
     Normalisation value provides the value we are normalising to, i.e. if you want the IMF to represent 100 solar masses.
 
-    The default values of alpha, beta, mc come from [Wise+ (2012)](https://ui.adsabs.harvard.edu/abs/2012ApJ...745...50W/abstract).
+    The default values of alpha, beta, mc come from [Brauer+ (2025)](https://ui.adsabs.harvard.edu/abs/2025ApJ...980...41B/abstract).
     """
     def __init__(self, alpha=-2.3, beta=-1.6, mc=10, normalisation=None, normalisation_value=1, Mmin=0.1, Mmax=100):
         self.α = alpha

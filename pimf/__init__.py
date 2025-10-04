@@ -38,7 +38,8 @@ from .initialmassfunction import (
     LognormalIMF,
     GeneralisedGammaIMF
     )
+from .sampling.sampling import draw_samples
 
 __version__ = "0.6.0"
 
-__all__ = initialmassfunction.__all__
+__all__ = initialmassfunction.__all__ + ["draw_samples"]
