@@ -830,6 +830,30 @@ class GeneralisedGammaIMF(InitialMassFunction):
         n_plus_1 = (self.α + 2) / self.β
         return self.ξ0 * self.mc * self.integral_constant * (self.Γ_lower_incomplete(n_plus_1, u2) - self.Γ_lower_incomplete(n_plus_1, u1))
 
+    def inverse_cdf(self, x):
+        """
+        Calculate the inverse cumulative distribution function for this IMF.
+
+        MATHS
+
+        This is intended to be used for stochastically sampling stars from the IMF using `LINK`
+
+        Parameters
+        ----------
+        x : int, float, or numpy array
+            The value of the CDF at a given mass. Between 0 and 1.
+
+        Returns
+        -------
+        type of x
+            The mass(es) that give the x value(s) in the CDF.
+        """
+        N = self.integrate(self.Mmin, self.Mmax)
+        u1 = (self.Mmin / self.mc) ** self.β
+        n_plus_1 = (self.α + 1) / self.β
+        u = special.gammaincinv(n_plus_1, ((x * N / self.ξ0 / self.integral_constant) + self.Γ_lower_incomplete(n_plus_1, u1)) / special.gamma(n_plus_1))
+        return self.mc * u**(1/self.β)
+
 class ExponentialCutoffPowerLawIMF(GeneralisedGammaIMF):
     def __init__(self, *args, **kwargs):
         raise DeprecationWarning("`ExponentialCutoffPowerLawIMF` has been renamed `GeneralisedGammaIMF`.")
