@@ -119,13 +119,13 @@ class PowerLawIMF(InitialMassFunction):
 
     You can specify if you want to normalise by mass or number, and the range.
     If a number is passed to normalisation then it is used
-    If no normalisation is specified, then we take $\\xi_0 = 1$.
+    If no normalisation is specified, then we use "number", which with `normalisation_value=1` will yield a PDF.
 
     Normalisation value provides the value we are normalising to, i.e. if you want the IMF to represent 100 solar masses.
 
     With the default slope of -2.35 this represents a Salpeter (1955) IMF.
     """
-    def __init__(self, alpha=-2.35, normalisation=None, normalisation_value=1, Mmin=0.1, Mmax=100):
+    def __init__(self, alpha=-2.35, normalisation="number", normalisation_value=1, Mmin=0.1, Mmax=100):
         if alpha == -1:
             # Need special case of integal(x^alpha) = ln(x)
             self.integrate = self._integrate_log
@@ -230,7 +230,7 @@ class ChabrierIMF(InitialMassFunction):
 
     With the default values this represents a Chabrier (2003) IMF.
     """
-    def __init__(self, mc=0.079, sigma=0.69, alpha=-2.35, normalisation=None, normalisation_value=1, Mmin=0.1, Mmax=100):
+    def __init__(self, mc=0.079, sigma=0.69, alpha=-2.35, normalisation="number", normalisation_value=1, Mmin=0.1, Mmax=100):
         self.mc = mc
         self.σ = sigma
         self.α = alpha
@@ -376,13 +376,13 @@ class BrokenPowerLawIMF(InitialMassFunction):
 
     You can specify if you want to normalise by mass or number, and the range.
     If a number is passed to normalisation then it is used
-    If no normalisation is specified, then we take $\\xi_0 = 1$.
+    If no normalisation is specified, then we use "number", which with `normalisation_value=1` will yield a PDF.
 
     Normalisation value provides the value we are normalising to, i.e. if you want the IMF to represent 100 solar masses.
 
     With the default values this represents a Kroupa (2001) IMF *above $0.08M_\\odot$*.
     """
-    def __init__(self, alpha1=-1.3, alpha2=-2.3, Mtransition=0.5, normalisation=None, normalisation_value=1, Mmin=0.1, Mmax=100):
+    def __init__(self, alpha1=-1.3, alpha2=-2.3, Mtransition=0.5, normalisation="number", normalisation_value=1, Mmin=0.1, Mmax=100):
         self.α1 = alpha1
         self.α2 = alpha2
         self.Mtransition = Mtransition
@@ -509,13 +509,13 @@ class L3IMF(InitialMassFunction):
 
     You can specify if you want to normalise by mass or number, and the range.
     If a number is passed to normalisation then it is used
-    If no normalisation is specified, then we take $\\xi_0 = 1$.
+    If no normalisation is specified, then we use "number", which with `normalisation_value=1` will yield a PDF.
 
     Normalisation value provides the value we are normalising to, i.e. if you want the IMF to represent 100 solar masses.
 
     With the default parameter values of 2.3, 1.4, 0.2 this represents a best fit to Kroupa/Charier IMFs, provided in Maschberger (2013).
     """
-    def __init__(self, alpha=2.3, beta=1.4, mu=0.2, normalisation=None, normalisation_value=1, Mmin=0.1, Mmax=100):
+    def __init__(self, alpha=2.3, beta=1.4, mu=0.2, normalisation="number", normalisation_value=1, Mmin=0.1, Mmax=100):
         self.α = alpha
         self.β = beta
         self.μ = mu
@@ -646,13 +646,13 @@ class LognormalIMF(InitialMassFunction):
 
     You can specify if you want to normalise by mass or number, and the range.
     If a number is passed to normalisation then it is used
-    If no normalisation is specified, then we take $\\xi_0 = 1$.
+    If no normalisation is specified, then we use "number", which with `normalisation_value=1` will yield a PDF.
 
     Normalisation value provides the value we are normalising to, i.e. if you want the IMF to represent 100 solar masses.
 
     Default values are not to be trusted blindly when considering Population III! The IMF is highly uncertain and you will need to make a decision.
     """
-    def __init__(self, mc, sigma=1, normalisation=None, normalisation_value=1, Mmin=1, Mmax=500):
+    def __init__(self, mc, sigma=1, normalisation="number", normalisation_value=1, Mmin=1, Mmax=500):
         self.mc = mc
         self.σ = sigma
         # Constants that go in front of integrals.
@@ -746,13 +746,13 @@ class GeneralisedGammaIMF(InitialMassFunction):
 
     You can specify if you want to normalise by mass or number, and the range.
     If a number is passed to normalisation then it is used
-    If no normalisation is specified, then we take $\\xi_0 = 1$.
+    If no normalisation is specified, then we use "number", which with `normalisation_value=1` will yield a PDF.
 
     Normalisation value provides the value we are normalising to, i.e. if you want the IMF to represent 100 solar masses.
 
     The default values of alpha, beta, mc come from [Brauer+ (2025)](https://ui.adsabs.harvard.edu/abs/2025ApJ...980...41B/abstract).
     """
-    def __init__(self, alpha=-2.3, beta=-1.6, mc=10, normalisation=None, normalisation_value=1, Mmin=0.1, Mmax=100):
+    def __init__(self, alpha=-2.3, beta=-1.6, mc=10, normalisation="number", normalisation_value=1, Mmin=0.1, Mmax=100):
         self.α = alpha
         self.β = beta
         self.mc = mc
