@@ -4,6 +4,7 @@ import pimf
 
 implemented_imfs = {
     "Power Law": pimf.PowerLawIMF(normalisation="mass", normalisation_value=1e5),
+    "Power Law (alpha=-1)": pimf.PowerLawIMF(alpha=-1, normalisation="mass", normalisation_value=1e5),
     "Broken Power Law": pimf.BrokenPowerLawIMF(normalisation="mass", normalisation_value=1e5),
     "Chabrier": pimf.ChabrierIMF(normalisation="mass", normalisation_value=1e5),
     "Lognormal": pimf.LognormalIMF(normalisation="mass", normalisation_value=1e5, mc=10, Mmin=0.1, Mmax=100),
@@ -17,7 +18,7 @@ def test_inverse_CDF():
 
 def test_imf_visually():
     M = np.geomspace(0.1, 100)
-    fig, axes = plt.subplots(3, 2, sharex=True, sharey=True)
+    fig, axes = plt.subplots(4, 2, sharex=True, sharey=True)
     for ax, imf_name in zip(axes.flatten(), implemented_imfs):
         imf = implemented_imfs[imf_name]
         ax.loglog(M, imf(M) / imf.integrate(0.1, 100), label="IMF")

@@ -129,6 +129,7 @@ class PowerLawIMF(InitialMassFunction):
         if alpha == -1:
             # Need special case of integal(x^alpha) = ln(x)
             self.integrate = self._integrate_log
+            self.inverse_cdf = self._inverse_cdf_log
         elif alpha == -2:
             # Need special case of integal(x * x^alpha) = ln(x)
             self.integrate_product = self._integrate_log
@@ -188,6 +189,12 @@ class PowerLawIMF(InitialMassFunction):
 
     def _integrate_log(self, Mmin, Mmax):
         return self.ξ0 * np.log(Mmax / Mmin)
+
+    def _inverse_cdf_log(self, x):
+        """Special case of `inverse_cdf` for alpha = -1."""
+        αp1 = self.α + 1
+        N = self.integrate(self.Mmin, self.Mmax)
+        return self.Mmin * np.exp(N * x / self.ξ0)
 
     def inverse_cdf(self, x):
         """
