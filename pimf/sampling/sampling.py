@@ -85,10 +85,8 @@ class IMFSampleList:
         self.add_quantity(count_black_holes, imf_average, name)
 
     def add_interpolated_quantity(self, mass_grid, quantity_grid, imf, name, interp_kwargs={}, imf_extrapolate=False, Mmin=None, Mmax=None):
-        if Mmin is None:
-            Mmin = imf.Mmin
-        if Mmax is None:
-            Mmax = imf.Mmax
+        Mmin = imf.Mmin if Mmin is None else max(Mmin, imf.Mmin)
+        Mmax = imf.Mmax if Mmax is None else min(Mmax, imf.Mmax)
         # Provide a grid of masses and quantities, then kwargs for np.interp
         def sum_interpolated(masses):
             mask = (masses >= Mmin) & (masses <= Mmax)
@@ -214,6 +212,7 @@ def draw_samples(imf, stop_method="below", target_mass=None, full_output=False, 
 
     if rescale:
         sample *= target_mass / sample.sum()  # Rescale each sampled mass so that the total mass is correct
+        # Should have some check/clipping that we don't go outside of our mass range
 
     if full_output:
         return IMFSample(sample, target_mass, stop_method)
