@@ -9,6 +9,25 @@ except ImportError:
 rng = np.random.default_rng()
 
 class IMFSample:
+    """
+    A class to calculate and store properties of a sample, beyond just a list of masses.
+
+    Has the ability to store:
+    * Quantity when the IMF has been sampled
+    * The same Quantity when the IMF has been averaged over
+    * The residual, defined as: (Qsampled - Qaveraged) / Qaveraged.
+    for quantities like:
+    * Number of Supernovae
+    * Number of black holes
+    * arbitrary quantities defined on a grid to be interpolated in mass, including ones that vary with time.
+
+    If you want to sample from the IMF several times, calculate the same quantities, and compare them, see also IMFSampleList.
+
+    Notes
+    -----
+    The residual is defined as (Qsampled - Qaveraged) / Qaveraged, so a residual of 1 means the sampled value is twice that of the averaged, or 100%.
+    A value close to 0 means they are similar, far away from 0 means different.
+    """
     def __init__(self, masses, target_mass, stop_method):
         self.masses = masses
         self.target_mass = target_mass
@@ -64,6 +83,25 @@ class IMFSample:
         pass  # Save to HDF5? Would be nice but adds dependencies
 
 class IMFSampleList:
+    """
+    A class to calculate and store properties of several samples, beyond just a list of masses.
+
+    Has the ability to store:
+    * Quantity when the IMF has been sampled
+    * The same Quantity when the IMF has been averaged over
+    * The residual, defined as: (Qsampled - Qaveraged) / Qaveraged.
+    for quantities like:
+    * Number of Supernovae
+    * Number of black holes
+    * arbitrary quantities defined on a grid to be interpolated in mass, including ones that vary with time.
+
+    If you want to sample from the IMF only once, see also IMFSample.
+
+    Notes
+    -----
+    The residual is defined as (Qsampled - Qaveraged) / Qaveraged, so a residual of 1 means the sampled value is twice that of the averaged, or 100%.
+    A value close to 0 means they are similar, far away from 0 means different.
+    """
     def __init__(self, sample_list):
         self.sample_list = sample_list
         self.sampled_quantities = {}
