@@ -42,6 +42,17 @@ class IMFSample:
         imf_average = imf.integrate_linear_piecewise_interpolated_product(imf.Mmin, imf.Mmax, mass_grid, quantity_grid)
         return self.add_quantity(sum_interpolated, imf_average, name)
 
+    def add_interpolated_quantity_time_dependant(self, mass_grid, quantity_grid, imf, name, interp_kwargs={}, imf_extrapolate=False, Mmin=None, Mmax=None):
+        Mmin = imf.Mmin if Mmin is None else max(Mmin, imf.Mmin)
+        Mmax = imf.Mmax if Mmax is None else min(Mmax, imf.Mmax)
+        # Provide a grid of masses and quantities, then kwargs for np.interp
+        def sum_interpolated(masses):
+            mask = (masses >= Mmin) & (masses <= Mmax)
+            return np.array([np.interp(masses[mask], mass_grid, row, **interp_kwargs).sum() for row in quantity_grid])
+        # I've not fully testing this broadcasting but it looks like if you do quantity_grid.T it's okay
+        imf_average = imf.integrate_linear_piecewise_interpolated_product(Mmin, Mmax, mass_grid, quantity_grid.T, extrapolate_grid=imf_extrapolate)
+        return self.add_quantity(sum_interpolated, imf_average, name)
+
     def add_quantity(self, function, imf_averaged_quantity, name):
         self.sampled_quantities[name] = function(self.masses)
         self.averaged_quantities[name] = imf_averaged_quantity
@@ -94,11 +105,28 @@ class IMFSampleList:
         imf_average = imf.integrate_linear_piecewise_interpolated_product(Mmin, Mmax, mass_grid, quantity_grid, extrapolate_grid=imf_extrapolate)
         return self.add_quantity(sum_interpolated, imf_average, name)
 
+    def add_interpolated_quantity_time_dependant(self, mass_grid, quantity_grid, imf, name, interp_kwargs={}, imf_extrapolate=False, Mmin=None, Mmax=None):
+        Mmin = imf.Mmin if Mmin is None else max(Mmin, imf.Mmin)
+        Mmax = imf.Mmax if Mmax is None else min(Mmax, imf.Mmax)
+        # Provide a grid of masses and quantities, then kwargs for np.interp
+        def sum_interpolated(masses):
+            mask = (masses >= Mmin) & (masses <= Mmax)
+            return [np.interp(masses[mask], mass_grid, row, **interp_kwargs).sum() for row in quantity_grid]
+        # I've not fully testing this broadcasting but it looks like if you do quantity_grid.T it's okay
+        imf_average = imf.integrate_linear_piecewise_interpolated_product(Mmin, Mmax, mass_grid, quantity_grid.T, extrapolate_grid=imf_extrapolate)
+        return self.add_quantity(sum_interpolated, imf_average, name)
+
     def add_quantity(self, function, imf_averaged_quantity, name):
         # We can do this list comprehension and calculate the quantity for each sample, then while IMFSample.add_quantity returns the value add it to our list at the same time
-        self.sampled_quantities[name] = np.array([sample.add_quantity(function, imf_averaged_quantity, name) for sample in self.sample_list])
+        self.sampled_quantities[name] = np.array([sample.add_quantity(function, imf_averaged_quantity, name) for sample in self.sample_list]).T
+        # Take transpose so this array is (Ntime, Nsamples) to calculate residuals.
+        # This way means that the first axis of all averaged, sampled, and residuals are time.
         self.averaged_quantities[name] = imf_averaged_quantity
-        self.residuals[name] = (self.sampled_quantities[name] - imf_averaged_quantity) / imf_averaged_quantity
+        # Want to check if imf_averaged_quantity is an array (meaning it varies with time) or a float/int (so it doesn't)
+        if isinstance(imf_averaged_quantity, np.ndarray):
+            self.residuals[name] = (self.sampled_quantities[name] - imf_averaged_quantity[:, None]) / imf_averaged_quantity[:, None]
+        else:
+            self.residuals[name] = (self.sampled_quantities[name] - imf_averaged_quantity) / imf_averaged_quantity
 
     def quantile(self, name, quantiles=[0.1, 0.5, 0.9], residual=False):
         if residual is True:
