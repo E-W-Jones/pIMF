@@ -237,7 +237,7 @@ class ChabrierIMF(InitialMassFunction):
 
     With the default values this represents a Chabrier (2003) IMF.
     """
-    def __init__(self, mc=0.079, sigma=0.69, alpha=-2.35, normalisation="number", normalisation_value=1, Mmin=0.1, Mmax=100):
+    def __init__(self, mc=0.079, sigma=0.69, alpha=-2.3, normalisation="number", normalisation_value=1, Mmin=0.1, Mmax=100):
         self.mc = mc
         self.σ = sigma
         self.α = alpha
