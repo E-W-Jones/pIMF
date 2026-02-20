@@ -220,7 +220,7 @@ class IMFSampleList:
 
 def draw_samples(imf, stop_method="below", target_mass=None, full_output=False, rescale=False, rng=rng):
     """
-    _summary_
+    Draw samples from the given imf until the target mass is reached within a user specified tolerance.
 
     Parameters
     ----------
@@ -284,6 +284,52 @@ def draw_samples(imf, stop_method="below", target_mass=None, full_output=False, 
         return IMFSample(sample, target_mass, stop_method)
     else:
         return sample
+
+def optimal_sampling(imf, target_mass=None, full_output=False):
+    """
+    Draw stars from the IMF using "optimal sampling". (Which papers are best to cite here?)
+
+    Note that this differs from `~pimf.sampling.draw_samples` in that it is deterministic.
+
+    Parameters
+    ----------
+    imf : InitialMassFunction subclass
+        The IMF to sample from. Needs to have `inverse_cdf()` method implemented.
+    target_mass : int or float, optional
+        The target mass to aim for, by default None. If None, use the total mass of the provided IMF.
+    full_output : bool, optional
+        Whether or not to return an IMFSample object (True) or just a numpy array of the sampled masses, by default False (only return mass array).
+
+    Returns
+    -------
+    ndarray or IMFSample object
+        An array of the masses drawn randomly from the IMF if full_output=False (default), or an IMFSample object representing the sample and additional information.
+
+    """
+    raise NotImplementedError
+    # To generate the array of masses all we need is eqn 48 from Gjergo+ 2026: https://arxiv.org/pdf/2601.20998
+    # This relates the ith mass to the inverse CDF: mi = invCDF(i / N)
+    # So we need to convert our mass to a number of expected stars, which we can do using imf.integrate() and the fact M1/N1 = M2/N2 for the same IMF
+    if target_mass is None:
+        N = imf.integrate(imf.Mmin, imf.Mmax)
+    else:
+        N = imf.integrate(imf.Mmin, imf.Mmax) * target_mass / imf.integrate_product(imf.Mmin, imf.Mmax)
+    # But we don't know N a priori :(, just the average. But this must be a good starting point.
+
+    # iterate through finding arrays and increase or decrease N until we are as close to mass as possible.
+    # In python we will iterate and stop before we hit N
+    Nleft, Nright = np.floor(N).astype(int), np.ceil(N).astype(int)
+    print(np.arange(1, Nleft+1)/Nleft)
+    masses_left = imf.inverse_cdf(np.arange(1, Nleft+1)/Nleft)
+    masses_right = imf.inverse_cdf(np.arange(1, Nright+1)/Nright)
+    print(Nleft, Nright, masses_left.sum(), masses_right.sum())
+    print(masses_left)
+    print(masses_right)
+    # Produces 100Msol stars at all times, needs improvement to include the actual Mmax which would definitely be better if I had a copy method. I think that's my issue.
+
+
+
+
 
 def smith2021_sampling(imf, Nsamples, Mtarget=None):
     # The paper uses the terms
