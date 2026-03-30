@@ -107,6 +107,18 @@ class IMFSampleList:
             return np.quantile(self.sampled_quantities[name], quantiles)
 
     def save(self, filename):
+        """
+        Save to `filename` as a hdf5 file.
+
+        Saves:
+            - Number of samples
+            - Each chain of masses representing one realisation
+            - Target mass
+            - Stop method used
+            - All IMF averaged, sampled, and residuals off derivated properties.
+
+        Can be loaded using the `load` class method.
+        """
         with h5File(filename, "w") as fileout:
             fileout.create_dataset("Number_of_samples", data=self.Nsamples)
 
@@ -132,6 +144,7 @@ class IMFSampleList:
 
     @classmethod
     def load(cls, filename):
+        """Read sample data from an hdf5 file called `filename`."""
         with h5File(filename, "r") as filein:
             Nsamples = filein["Number_of_samples"][()]
 
