@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import brentq
 try:
     from h5py import string_dtype, File as h5File
     string_dtype = string_dtype(encoding='utf-8', length=None)
@@ -168,9 +169,13 @@ class IMFSampleList:
 
     def quantile(self, name, quantiles=[0.1, 0.5, 0.9], residual=False, ignore_nans=False):
         _quantile = np.nanquantile if ignore_nans else np.quantile
+    def quantile(self, name, quantiles=[0.1, 0.5, 0.9], residual=False, ignore_nans=False):
+        _quantile = np.nanquantile if ignore_nans else np.quantile
         if residual is True:
             return _quantile(self.residuals[name], quantiles)
+            return _quantile(self.residuals[name], quantiles)
         else:
+            return _quantile(self.sampled_quantities[name], quantiles)
             return _quantile(self.sampled_quantities[name], quantiles)
 
     def save(self, filename):
@@ -299,11 +304,13 @@ def draw_samples(imf, stop_method="below", target_mass=None, full_output=False, 
     else:
         return sample
 
-def optimal_sampling(imf, target_mass=None, full_output=False):
+def optimal_sampling(imf, target_mass=None, Mmax=100, full_output=False):
     """
     Draw stars from the IMF using "optimal sampling". (Which papers are best to cite here?)
 
     Note that this differs from `~pimf.sampling.draw_samples` in that it is deterministic.
+
+    WARNING This will mutate imf.
 
     Parameters
     ----------
@@ -320,26 +327,19 @@ def optimal_sampling(imf, target_mass=None, full_output=False):
         An array of the masses drawn randomly from the IMF if full_output=False (default), or an IMFSample object representing the sample and additional information.
 
     """
-    raise NotImplementedError
-    # To generate the array of masses all we need is eqn 48 from Gjergo+ 2026: https://arxiv.org/pdf/2601.20998
-    # This relates the ith mass to the inverse CDF: mi = invCDF(i / N)
-    # So we need to convert our mass to a number of expected stars, which we can do using imf.integrate() and the fact M1/N1 = M2/N2 for the same IMF
     if target_mass is None:
-        N = imf.integrate(imf.Mmin, imf.Mmax)
-    else:
-        N = imf.integrate(imf.Mmin, imf.Mmax) * target_mass / imf.integrate_product(imf.Mmin, imf.Mmax)
-    # But we don't know N a priori :(, just the average. But this must be a good starting point.
+        target_mass = imf.integrate_product(imf.Mmin, imf.Mmax)
+    # find N in a very unelegant but convenient way: bisection of mN to find N.
+    # We want to solve imf.integrate_product(Mmin, mN) == target_mass (by construction) with imf.integrate(mN, Mmax) == 1
+    def root(mN):
+        imf.normalise_by_mass(imf.Mmin, mN, target_mass)
+        return imf.integrate(mN, Mmax) - 1
 
-    # iterate through finding arrays and increase or decrease N until we are as close to mass as possible.
-    # In python we will iterate and stop before we hit N
-    Nleft, Nright = np.floor(N).astype(int), np.ceil(N).astype(int)
-    print(np.arange(1, Nleft+1)/Nleft)
-    masses_left = imf.inverse_cdf(np.arange(1, Nleft+1)/Nleft)
-    masses_right = imf.inverse_cdf(np.arange(1, Nright+1)/Nright)
-    print(Nleft, Nright, masses_left.sum(), masses_right.sum())
-    print(masses_left)
-    print(masses_right)
-    # Produces 100Msol stars at all times, needs improvement to include the actual Mmax which would definitely be better if I had a copy method. I think that's my issue.
+    print("Finding mN with bisection: ")
+    mN = brentq(root,
+                1.01*imf.Mmin,  # Add 1% so we don't integrate from Mmin to Mmin
+                Mmax)
+    print(mN, imf.integrate(imf.Mmin, mN))
 
 
 
