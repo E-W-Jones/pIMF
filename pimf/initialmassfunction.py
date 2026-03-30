@@ -46,13 +46,13 @@ class InitialMassFunction:
     def normalise_by_number(self, Mmin, Mmax, value=1):
         """Normalise the IMF by number, so $\\int^{M_\\mathrm{max}}_{M_\\mathrm{min}} \\xi(m)\\mathrm{d}m = x$, where x is a user provided value, default 1."""
         self._check_Mmin_Mmax(Mmin, Mmax)
-        self.ξ0 = value / self.integrate(Mmin, Mmax)
+        self.ξ0 *= value / self.integrate(Mmin, Mmax)
         self.normalised = ("number", Mmin, Mmax)
 
     def normalise_by_mass(self, Mmin, Mmax, value=1):
         """Normalise the IMF by mass, so $\\int^{M_\\mathrm{max}}_{M_\\mathrm{min}} m\\xi(m)\\mathrm{d}m = x$, where x is a user provided value, default 1."""
         self._check_Mmin_Mmax(Mmin, Mmax)
-        self.ξ0 = value / self.integrate_product(Mmin, Mmax)
+        self.ξ0 *= value / self.integrate_product(Mmin, Mmax)
         self.normalised = ("mass", Mmin, Mmax)
 
     def mean_mass(self, Mmin, Mmax):
@@ -237,7 +237,7 @@ class ChabrierIMF(InitialMassFunction):
 
     With the default values this represents a Chabrier (2003) IMF.
     """
-    def __init__(self, mc=0.079, sigma=0.69, alpha=-2.35, normalisation="number", normalisation_value=1, Mmin=0.1, Mmax=100):
+    def __init__(self, mc=0.079, sigma=0.69, alpha=-2.3, normalisation="number", normalisation_value=1, Mmin=0.1, Mmax=100):
         self.mc = mc
         self.σ = sigma
         self.α = alpha

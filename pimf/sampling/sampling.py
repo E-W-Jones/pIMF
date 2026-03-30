@@ -166,13 +166,26 @@ class IMFSampleList:
         else:
             self.residuals[name] = (self.sampled_quantities[name] - imf_averaged_quantity) / imf_averaged_quantity
 
-    def quantile(self, name, quantiles=[0.1, 0.5, 0.9], residual=False):
+    def quantile(self, name, quantiles=[0.1, 0.5, 0.9], residual=False, ignore_nans=False):
+        _quantile = np.nanquantile if ignore_nans else np.quantile
         if residual is True:
-            return np.quantile(self.residuals[name], quantiles)
+            return _quantile(self.residuals[name], quantiles)
         else:
-            return np.quantile(self.sampled_quantities[name], quantiles)
+            return _quantile(self.sampled_quantities[name], quantiles)
 
     def save(self, filename):
+        """
+        Save to `filename` as a hdf5 file.
+
+        Saves:
+            - Number of samples
+            - Each chain of masses representing one realisation
+            - Target mass
+            - Stop method used
+            - All IMF averaged, sampled, and residuals off derivated properties.
+
+        Can be loaded using the `load` class method.
+        """
         with h5File(filename, "w") as fileout:
             fileout.create_dataset("Number_of_samples", data=self.Nsamples)
 
@@ -198,6 +211,7 @@ class IMFSampleList:
 
     @classmethod
     def load(cls, filename):
+        """Read sample data from an hdf5 file called `filename`."""
         with h5File(filename, "r") as filein:
             Nsamples = filein["Number_of_samples"][()]
 
