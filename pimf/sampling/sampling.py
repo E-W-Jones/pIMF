@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import brentq
 try:
     from h5py import string_dtype, File as h5File
     string_dtype = string_dtype(encoding='utf-8', length=None)
@@ -9,6 +10,25 @@ except ImportError:
 rng = np.random.default_rng()
 
 class IMFSample:
+    """
+    A class to calculate and store properties of a sample, beyond just a list of masses.
+
+    Has the ability to store:
+    * Quantity when the IMF has been sampled
+    * The same Quantity when the IMF has been averaged over
+    * The residual, defined as: (Qsampled - Qaveraged) / Qaveraged.
+    for quantities like:
+    * Number of Supernovae
+    * Number of black holes
+    * arbitrary quantities defined on a grid to be interpolated in mass, including ones that vary with time.
+
+    If you want to sample from the IMF several times, calculate the same quantities, and compare them, see also IMFSampleList.
+
+    Notes
+    -----
+    The residual is defined as (Qsampled - Qaveraged) / Qaveraged, so a residual of 1 means the sampled value is twice that of the averaged, or 100%.
+    A value close to 0 means they are similar, far away from 0 means different.
+    """
     def __init__(self, masses, target_mass, stop_method):
         self.masses = masses
         self.target_mass = target_mass
@@ -42,6 +62,17 @@ class IMFSample:
         imf_average = imf.integrate_linear_piecewise_interpolated_product(imf.Mmin, imf.Mmax, mass_grid, quantity_grid)
         return self.add_quantity(sum_interpolated, imf_average, name)
 
+    def add_interpolated_quantity_time_dependant(self, mass_grid, quantity_grid, imf, name, interp_kwargs={}, imf_extrapolate=False, Mmin=None, Mmax=None):
+        Mmin = imf.Mmin if Mmin is None else max(Mmin, imf.Mmin)
+        Mmax = imf.Mmax if Mmax is None else min(Mmax, imf.Mmax)
+        # Provide a grid of masses and quantities, then kwargs for np.interp
+        def sum_interpolated(masses):
+            mask = (masses >= Mmin) & (masses <= Mmax)
+            return np.array([np.interp(masses[mask], mass_grid, row, **interp_kwargs).sum() for row in quantity_grid])
+        # I've not fully testing this broadcasting but it looks like if you do quantity_grid.T it's okay
+        imf_average = imf.integrate_linear_piecewise_interpolated_product(Mmin, Mmax, mass_grid, quantity_grid.T, extrapolate_grid=imf_extrapolate)
+        return self.add_quantity(sum_interpolated, imf_average, name)
+
     def add_quantity(self, function, imf_averaged_quantity, name):
         self.sampled_quantities[name] = function(self.masses)
         self.averaged_quantities[name] = imf_averaged_quantity
@@ -50,16 +81,77 @@ class IMFSample:
         # Could add getattr to read the sampled quantites dict
 
     def save(self, filename):
-        pass  # Save to HDF5? Would be nice but adds dependencies
+        raise NotImplementedError  # Save to HDF5? Would be nice but adds dependencies
+
+    @classmethod
+    def load(cls, filename, i=None):
+        """
+        Load single sample from a hdf5 file containing either just that sample or the `i`th sample of a list.
+
+        Single sample corresponds to `i=None`, 'default' but not yet implemented.
+        Alternatively if `filename` is a sample list, i.e. saved with `IMFSampleList.save` specifing `i` loads the `i`th sample in.
+
+        Parameters
+        ----------
+        filename : string
+            Filename to read from.
+        i : None or int, optional
+            Indexes a list of samples to load just that one, by default None (loads from single file).
+
+        Raises
+        ------
+        NotImplementedError
+            `i=None` currently not implemented as IMFSample doesn't have a working save method.
+            Use IMFSampleList (or contribute!) instead.
+        """
+        if i is None:
+            # filename should correspond to a hdf5 file with only one sample, save doesn't exist yet.
+            raise NotImplementedError("Single sample saving and loading is not created yet.")
+        else:
+            with h5File(filename, "r") as filein:
+                # Quick check i is valid
+                if i >= filein["Number_of_samples"][()]:
+                    raise IndexError(f"`i`={i} is not a valid index (larger than `Number_of_samples - 1` = {filein["Number_of_samples"][()]-1}).")
+
+                sample_group = filein[f"Samples/sample {i}"]
+                masses = sample_group["Masses"][:]
+                target_mass = sample_group["Target_mass"][()]
+                stop_method = sample_group["Stop_method"].asstr()[()]
+                sample = cls(masses, target_mass, stop_method)
+
+                for quantity in filein["Derived_quantities"]:
+                    sample.averaged_quantities[quantity] = filein[f"Derived_quantities/{quantity}/IMF Averaged"][()]  # Averaged is a scalar
+                    sample.sampled_quantities[quantity] = filein[f"Derived_quantities/{quantity}/Sampled"][i]
+                    sample.residuals[quantity] = filein[f"Derived_quantities/{quantity}/Residuals"][i]
+
+                return sample
 
 class IMFSampleList:
+    """
+    A class to calculate and store properties of several samples, beyond just a list of masses.
+
+    Has the ability to store:
+    * Quantity when the IMF has been sampled
+    * The same Quantity when the IMF has been averaged over
+    * The residual, defined as: (Qsampled - Qaveraged) / Qaveraged.
+    for quantities like:
+    * Number of Supernovae
+    * Number of black holes
+    * arbitrary quantities defined on a grid to be interpolated in mass, including ones that vary with time.
+
+    If you want to sample from the IMF only once, see also IMFSample.
+
+    Notes
+    -----
+    The residual is defined as (Qsampled - Qaveraged) / Qaveraged, so a residual of 1 means the sampled value is twice that of the averaged, or 100%.
+    A value close to 0 means they are similar, far away from 0 means different.
+    """
     def __init__(self, sample_list):
         self.sample_list = sample_list
         self.sampled_quantities = {}
         self.averaged_quantities = {}
         self.residuals = {}
         self.Nsamples = len(sample_list)
-        # Need to make a decision about having different stop_methods - should it be allowed?
 
     def add_total_mass(self, imf):
         imf_average = imf.integrate_product(imf.Mmin, imf.Mmax)
@@ -94,17 +186,38 @@ class IMFSampleList:
         imf_average = imf.integrate_linear_piecewise_interpolated_product(Mmin, Mmax, mass_grid, quantity_grid, extrapolate_grid=imf_extrapolate)
         return self.add_quantity(sum_interpolated, imf_average, name)
 
+    def add_interpolated_quantity_time_dependant(self, mass_grid, quantity_grid, imf, name, interp_kwargs={}, imf_extrapolate=False, Mmin=None, Mmax=None):
+        Mmin = imf.Mmin if Mmin is None else max(Mmin, imf.Mmin)
+        Mmax = imf.Mmax if Mmax is None else min(Mmax, imf.Mmax)
+        # Provide a grid of masses and quantities, then kwargs for np.interp
+        def sum_interpolated(masses):
+            mask = (masses >= Mmin) & (masses <= Mmax)
+            return [np.interp(masses[mask], mass_grid, row, **interp_kwargs).sum() for row in quantity_grid]
+        # I've not fully testing this broadcasting but it looks like if you do quantity_grid.T it's okay
+        imf_average = imf.integrate_linear_piecewise_interpolated_product(Mmin, Mmax, mass_grid, quantity_grid.T, extrapolate_grid=imf_extrapolate)
+        return self.add_quantity(sum_interpolated, imf_average, name)
+
     def add_quantity(self, function, imf_averaged_quantity, name):
         # We can do this list comprehension and calculate the quantity for each sample, then while IMFSample.add_quantity returns the value add it to our list at the same time
-        self.sampled_quantities[name] = np.array([sample.add_quantity(function, imf_averaged_quantity, name) for sample in self.sample_list])
+        self.sampled_quantities[name] = np.array([sample.add_quantity(function, imf_averaged_quantity, name) for sample in self.sample_list]).T
+        # Take transpose so this array is (Ntime, Nsamples) to calculate residuals.
+        # This way means that the first axis of all averaged, sampled, and residuals are time.
         self.averaged_quantities[name] = imf_averaged_quantity
-        self.residuals[name] = (self.sampled_quantities[name] - imf_averaged_quantity) / imf_averaged_quantity
+        # Want to check if imf_averaged_quantity is an array (meaning it varies with time) or a float/int (so it doesn't)
+        if isinstance(imf_averaged_quantity, np.ndarray):
+            self.residuals[name] = (self.sampled_quantities[name] - imf_averaged_quantity[:, None]) / imf_averaged_quantity[:, None]
+        else:
+            self.residuals[name] = (self.sampled_quantities[name] - imf_averaged_quantity) / imf_averaged_quantity
 
+    def quantile(self, name, quantiles=[0.1, 0.5, 0.9], residual=False, ignore_nans=False):
+        _quantile = np.nanquantile if ignore_nans else np.quantile
     def quantile(self, name, quantiles=[0.1, 0.5, 0.9], residual=False, ignore_nans=False):
         _quantile = np.nanquantile if ignore_nans else np.quantile
         if residual is True:
             return _quantile(self.residuals[name], quantiles)
+            return _quantile(self.residuals[name], quantiles)
         else:
+            return _quantile(self.sampled_quantities[name], quantiles)
             return _quantile(self.sampled_quantities[name], quantiles)
 
     def save(self, filename):
@@ -168,7 +281,7 @@ class IMFSampleList:
 
 def draw_samples(imf, stop_method="below", target_mass=None, full_output=False, rescale=False, rng=rng):
     """
-    _summary_
+    Draw samples from the given imf until the target mass is reached within a user specified tolerance.
 
     Parameters
     ----------
@@ -232,6 +345,47 @@ def draw_samples(imf, stop_method="below", target_mass=None, full_output=False, 
         return IMFSample(sample, target_mass, stop_method)
     else:
         return sample
+
+def optimal_sampling(imf, target_mass=None, Mmax=100, full_output=False):
+    """
+    Draw stars from the IMF using "optimal sampling". (Which papers are best to cite here?)
+
+    Note that this differs from `~pimf.sampling.draw_samples` in that it is deterministic.
+
+    WARNING This will mutate imf.
+
+    Parameters
+    ----------
+    imf : InitialMassFunction subclass
+        The IMF to sample from. Needs to have `inverse_cdf()` method implemented.
+    target_mass : int or float, optional
+        The target mass to aim for, by default None. If None, use the total mass of the provided IMF.
+    full_output : bool, optional
+        Whether or not to return an IMFSample object (True) or just a numpy array of the sampled masses, by default False (only return mass array).
+
+    Returns
+    -------
+    ndarray or IMFSample object
+        An array of the masses drawn randomly from the IMF if full_output=False (default), or an IMFSample object representing the sample and additional information.
+
+    """
+    if target_mass is None:
+        target_mass = imf.integrate_product(imf.Mmin, imf.Mmax)
+    # find N in a very unelegant but convenient way: bisection of mN to find N.
+    # We want to solve imf.integrate_product(Mmin, mN) == target_mass (by construction) with imf.integrate(mN, Mmax) == 1
+    def root(mN):
+        imf.normalise_by_mass(imf.Mmin, mN, target_mass)
+        return imf.integrate(mN, Mmax) - 1
+
+    print("Finding mN with bisection: ")
+    mN = brentq(root,
+                1.01*imf.Mmin,  # Add 1% so we don't integrate from Mmin to Mmin
+                Mmax)
+    print(mN, imf.integrate(imf.Mmin, mN))
+
+
+
+
 
 def smith2021_sampling(imf, Nsamples, Mtarget=None):
     # The paper uses the terms
