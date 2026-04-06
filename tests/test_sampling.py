@@ -1,6 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pimf
+from pathlib import Path
+
+tmp = Path("/tmp/test.hdf5")
+tmp.touch()
 
 implemented_imfs = {
     "Power Law": pimf.PowerLawIMF(normalisation="mass", normalisation_value=1e5),
@@ -130,3 +134,37 @@ def test_interpolation_over_time_function_samples():
     fig.supylabel("Luminosity / solar units residual")
     # axes[0, 0].legend()
     plt.show()
+
+# Doesn't test for any derived quantities yet
+def test_save():
+    masses = [0.1, 1, 10]
+    target_mass = -1
+    stop_method = "test"
+    sample_list = pimf.sampling.IMFSampleList(
+        [pimf.sampling.IMFSample(masses, target_mass, stop_method)]
+    )
+    sample_list.save(tmp)
+
+def test_load():
+    masses = [0.1, 1, 10]
+    target_mass = -1
+    stop_method = "test"
+
+    sample_list = pimf.sampling.IMFSampleList.load(tmp)
+    # Test hard coded values above
+    assert sample_list.Nsamples == 1
+    assert target_mass == sample_list.sample_list[0].target_mass
+    assert np.all(masses == sample_list.sample_list[0].masses)
+    assert stop_method == sample_list.sample_list[0].stop_method
+
+def test_load_single():
+    masses = [0.1, 1, 10]
+    target_mass = -1
+    stop_method = "test"
+
+    sample = pimf.sampling.IMFSample.load(tmp, i=0)
+    # Test hard coded values above
+    assert target_mass == sample.target_mass
+    assert masses == list(sample.masses)
+    assert stop_method == sample.stop_method
+

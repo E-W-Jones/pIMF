@@ -81,7 +81,50 @@ class IMFSample:
         # Could add getattr to read the sampled quantites dict
 
     def save(self, filename):
-        pass  # Save to HDF5? Would be nice but adds dependencies
+        raise NotImplementedError  # Save to HDF5? Would be nice but adds dependencies
+
+    @classmethod
+    def load(cls, filename, i=None):
+        """
+        Load single sample from a hdf5 file containing either just that sample or the `i`th sample of a list.
+
+        Single sample corresponds to `i=None`, 'default' but not yet implemented.
+        Alternatively if `filename` is a sample list, i.e. saved with `IMFSampleList.save` specifing `i` loads the `i`th sample in.
+
+        Parameters
+        ----------
+        filename : string
+            Filename to read from.
+        i : None or int, optional
+            Indexes a list of samples to load just that one, by default None (loads from single file).
+
+        Raises
+        ------
+        NotImplementedError
+            `i=None` currently not implemented as IMFSample doesn't have a working save method.
+            Use IMFSampleList (or contribute!) instead.
+        """
+        if i is None:
+            # filename should correspond to a hdf5 file with only one sample, save doesn't exist yet.
+            raise NotImplementedError("Single sample saving and loading is not created yet.")
+        else:
+            with h5File(filename, "r") as filein:
+                # Quick check i is valid
+                if i >= filein["Number_of_samples"][()]:
+                    raise IndexError(f"`i`={i} is not a valid index (larger than `Number_of_samples - 1` = {filein["Number_of_samples"][()]-1}).")
+
+                sample_group = filein[f"Samples/sample {i}"]
+                masses = sample_group["Masses"][:]
+                target_mass = sample_group["Target_mass"][()]
+                stop_method = sample_group["Stop_method"].asstr()[()]
+                sample = cls(masses, target_mass, stop_method)
+
+                for quantity in filein["Derived_quantities"]:
+                    sample.averaged_quantities[quantity] = filein[f"Derived_quantities/{quantity}/IMF Averaged"][()]  # Averaged is a scalar
+                    sample.sampled_quantities[quantity] = filein[f"Derived_quantities/{quantity}/Sampled"][i]
+                    sample.residuals[quantity] = filein[f"Derived_quantities/{quantity}/Residuals"][i]
+
+                return sample
 
 class IMFSampleList:
     """
@@ -109,7 +152,6 @@ class IMFSampleList:
         self.averaged_quantities = {}
         self.residuals = {}
         self.Nsamples = len(sample_list)
-        # Need to make a decision about having different stop_methods - should it be allowed?
 
     def add_total_mass(self, imf):
         imf_average = imf.integrate_product(imf.Mmin, imf.Mmax)
