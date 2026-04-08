@@ -40,6 +40,6 @@ from .initialmassfunction import (
     )
 from .sampling.sampling import draw_samples
 
-__version__ = "0.9.0"
+__version__ = "0.9.1"
 
 __all__ = initialmassfunction.__all__ + ["draw_samples"]

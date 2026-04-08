@@ -55,11 +55,13 @@ class IMFSample:
         name = "Number of black holes"
         return self.add_quantity(count_black_holes, imf_average, name)
 
-    def add_interpolated_quantity(self, mass_grid, quantity_grid, imf, name, interp_kwargs={}):
+    def add_interpolated_quantity(self, mass_grid, quantity_grid, imf, name, interp_kwargs={}, imf_extrapolate=False, Mmin=None, Mmax=None):
+        Mmin = imf.Mmin if Mmin is None else max(Mmin, imf.Mmin)
+        Mmax = imf.Mmax if Mmax is None else min(Mmax, imf.Mmax)
         # Provide a grid of masses and quantities, then kwargs for np.interp
         def sum_interpolated(masses):
             return np.interp(masses, mass_grid, quantity_grid, **interp_kwargs).sum()
-        imf_average = imf.integrate_linear_piecewise_interpolated_product(imf.Mmin, imf.Mmax, mass_grid, quantity_grid)
+        imf_average = imf.integrate_linear_piecewise_interpolated_product(Mmin, Mmax, mass_grid, quantity_grid, extrapolate_grid=imf_extrapolate)
         return self.add_quantity(sum_interpolated, imf_average, name)
 
     def add_interpolated_quantity_time_dependant(self, mass_grid, quantity_grid, imf, name, interp_kwargs={}, imf_extrapolate=False, Mmin=None, Mmax=None):
