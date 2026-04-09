@@ -213,8 +213,6 @@ class IMFSampleList:
 
     def quantile(self, name, quantiles=[0.1, 0.5, 0.9], residual=False, ignore_nans=False):
         _quantile = np.nanquantile if ignore_nans else np.quantile
-    def quantile(self, name, quantiles=[0.1, 0.5, 0.9], residual=False, ignore_nans=False):
-        _quantile = np.nanquantile if ignore_nans else np.quantile
         if residual is True:
             return _quantile(self.residuals[name], quantiles)
             return _quantile(self.residuals[name], quantiles)
