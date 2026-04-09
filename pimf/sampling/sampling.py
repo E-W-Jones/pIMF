@@ -215,9 +215,7 @@ class IMFSampleList:
         _quantile = np.nanquantile if ignore_nans else np.quantile
         if residual is True:
             return _quantile(self.residuals[name], quantiles)
-            return _quantile(self.residuals[name], quantiles)
         else:
-            return _quantile(self.sampled_quantities[name], quantiles)
             return _quantile(self.sampled_quantities[name], quantiles)
 
     def save(self, filename):
