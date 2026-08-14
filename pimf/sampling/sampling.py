@@ -82,11 +82,11 @@ class IMFSample:
         return self.sampled_quantities[name]
         # Could add getattr to read the sampled quantites dict
 
-    def save(self, filename):
+    def save(self, filename, additional_attributes=None):
         raise NotImplementedError  # Save to HDF5? Would be nice but adds dependencies
 
     @classmethod
-    def load(cls, filename, i=None):
+    def load(cls, filename, i=None, additional_attributes=False):
         """
         Load single sample from a hdf5 file containing either just that sample or the `i`th sample of a list.
 
@@ -99,6 +99,9 @@ class IMFSample:
             Filename to read from.
         i : None or int, optional
             Indexes a list of samples to load just that one, by default None (loads from single file).
+        additional_attributes : bool, optional
+            Whether or not to (try to) return a dictionary of optional attributes saved in the hdf5 file.
+            By default False (does not load return attributes). See `save` for how to save additional attributes.
 
         Raises
         ------
@@ -126,7 +129,10 @@ class IMFSample:
                     sample.sampled_quantities[quantity] = filein[f"Derived_quantities/{quantity}/Sampled"][i]
                     sample.residuals[quantity] = filein[f"Derived_quantities/{quantity}/Residuals"][i]
 
-                return sample
+                if not additional_attributes:
+                    return sample
+                else:
+                    return sample, dict(filein.attrs)
 
 class IMFSampleList:
     """
@@ -218,7 +224,7 @@ class IMFSampleList:
         else:
             return _quantile(self.sampled_quantities[name], quantiles)
 
-    def save(self, filename):
+    def save(self, filename, additional_attributes=None):
         """
         Save to `filename` as a hdf5 file.
 
@@ -228,6 +234,7 @@ class IMFSampleList:
             - Target mass
             - Stop method used
             - All IMF averaged, sampled, and residuals off derivated properties.
+            - Any `additional_attributes` passed as a dictionary.
 
         Can be loaded using the `load` class method.
         """
@@ -254,9 +261,19 @@ class IMFSampleList:
                     quantity_group.create_dataset("Residuals", data=self.residuals[quantity])
                     quantity_group["Residuals"].attrs.create("Definition", "(sampled_quantity - averaged_quantity) / averaged_quantity")
 
+            if additional_attributes is not None:
+                if isinstance(additional_attributes, dict):
+                    fileout.attrs.update(additional_attributes)
+                else:
+                    raise TypeError(f"{additional_attributes = } is not a dict.")
+
     @classmethod
-    def load(cls, filename):
-        """Read sample data from an hdf5 file called `filename`."""
+    def load(cls, filename, additional_attributes=False):
+        """
+        Read sample data from an hdf5 file called `filename`.
+
+        Optionally, if you saved with attributes these will be returned as a dictionary if `additional_attributes=True`.
+        """
         with h5File(filename, "r") as filein:
             Nsamples = filein["Number_of_samples"][()]
 
@@ -275,7 +292,10 @@ class IMFSampleList:
                 samples.sampled_quantities[quantity] = filein[f"Derived_quantities/{quantity}/Sampled"][()]
                 samples.residuals[quantity] = filein[f"Derived_quantities/{quantity}/Residuals"][()]
 
-            return samples
+            if not additional_attributes:
+                return samples
+            else:
+                return samples, dict(filein.attrs)
 
 def draw_samples(imf, stop_method="below", target_mass=None, full_output=False, rescale=False, rng=rng):
     """
