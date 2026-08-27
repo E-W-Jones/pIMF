@@ -1,3 +1,4 @@
+```
   ⋆˙⟡     /██████ /██  ˖   /██ /████████
        ✦ |_  ██_/| ███  ⊹ /███| ██_____/
   /██████  | ██ ⊹| ████  /████| ██  ⟡
@@ -9,6 +10,7 @@
 | ██ ✶   *       ⋆ . ˚    ⋆  ︎   ˚ ⋆   ⋆
 | ██   ⋆    ˚   ✦   ݁        ✦  ݁     .
 |__/     ✩   .    . ˚   ⋆     ｡  ⋆  ⋆ ⭒
+```
 
 # pIMF
 pIMF (python Initial Mass Function, pronounced pie-em-eff) is a small library designed for interacting with intial mass functions of stars.
